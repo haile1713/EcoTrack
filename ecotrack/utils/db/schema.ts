@@ -48,7 +48,7 @@ export const Rewards = pgTable("rewards", {
 	collectionInfo: text("collection_info").notNull(),
 });
 
-export const CollectedWaste = pgTable("collected_waste", {
+export const CollectedWastes = pgTable("collected_waste", {
 	id: serial("id").primaryKey(),
 	reportId: integer("report_id")
 		.references(() => Reports.id)
