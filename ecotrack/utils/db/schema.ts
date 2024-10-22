@@ -26,13 +26,14 @@ export const Reports = pgTable("reports", {
 	wasteType: varchar("wasteType", { length: 255 }).notNull(),
 	amount: varchar("amount", { length: 255 }).notNull(),
 	imageUrl: text("imageUrl"),
-	verficationResult: jsonb("verification_result"),
+	verificationResult: jsonb("verification_result"), // Corrected typo here
 	status: varchar("status", { length: 255 }).notNull().default("pending"),
 	createdAt: timestamp("created_at").defaultNow().notNull(),
 	collectorId: integer("collector_id")
 		.references(() => Users.id)
 		.notNull(),
 });
+
 
 export const Rewards = pgTable("rewards", {
 	id: serial("id").primaryKey(),

@@ -1,6 +1,6 @@
 import { Flag } from "lucide-react";
 import { db } from "./dbConfig";
-import { Notifications, Users, Transactions } from "./schema";
+import { Notifications, Users, Transactions, Reports } from "./schema";
 import { eq, sql, and, desc } from "drizzle-orm";
 import { date } from "drizzle-orm/mysql-core";
 
@@ -99,5 +99,66 @@ export async function markNotificationAsRead(notificationId: number) {
 	} catch (error) {
 		console.error("Error marking notfication as read", error);
 		return null;
+	}
+}
+
+export async function createReport(
+	collectorId: number,
+	userId: number,
+	location: string,
+	wasteType: string,
+	amount: string,
+	imageUrl?: string,
+	type?: string,
+	verificationResult?: any
+) {
+	try {
+		const [report] = await db
+			.insert(Reports)
+			.values({
+				collectorId,
+				userId,
+				location,
+				wasteType,
+				amount,
+				imageUrl,
+				verificationResult,
+				status: "pending",
+			})
+			.returning()
+			.execute();
+
+		// Award 10 points for reporting waste
+		const pointsEarned = 10;
+		await updateRewardPoints(userId, pointsEarned);
+
+		// Create a transaction for the earned points
+		// await createTransaction(
+		// 	userId,
+		// 	"earned_report",
+		// 	pointsEarned,
+		// 	"Points earned for reporting waste"
+		// );
+
+		// Create a notification for the user
+		// await createNotification(
+		// 	userId,
+		// 	`You've earned ${pointsEarned} points for reporting waste!`,
+		// 	"reward"
+		// );
+
+		return report;
+	} catch (error) {
+		console.error("Error creating report:", error);
+		return null;
+	}
+}
+
+export async function updateRewardPoints(userId:number ,pointsToAdd:number){
+	try{
+		
+
+	}catch(e){
+
 	}
 }
