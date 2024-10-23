@@ -256,29 +256,66 @@ export default function ReportPage() {
 			</h1>
 			<form
 				onSubmit={handleSubmit}
-				className="bg-white p-8 rounded-2xl shadow-lg mb-12">
-                         <div className="mb-8">
-          <label htmlFor="waste-image" className="block text-lg font-medium text-gray-700 mb-2">
-            Upload Waste Image
-          </label>
-          <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-green-500 transition-colors duration-300">
-            <div className="space-y-1 text-center">
-              <Upload className="mx-auto h-12 w-12 text-gray-400" />
-              <div className="flex text-sm text-gray-600">
-                <label
-                  htmlFor="waste-image"
-                  className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500"
-                >
-                  <span>Upload a file</span>
-                  <input id="waste-image" name="waste-image" type="file" className="sr-only" onChange={handleFileChange} accept="image/*" />
-                </label>
-                <p className="pl-1">or drag and drop</p>
-              </div>
-              <p className="text-xs text-gray-500">PNG, JPG, GIF up to 10MB</p>
-            </div>
-          </div>
-        </div>   
-                </form>
+				className="bg-white p-8 rounded-2xl shadow-lg mb-12"
+			>
+				<div className="mb-8">
+					<label
+						htmlFor="waste-image"
+						className="block text-lg font-medium text-gray-700 mb-2"
+					>
+						Upload Waste Image
+					</label>
+					<div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-xl hover:border-green-500 transition-colors duration-300">
+						<div className="space-y-1 text-center">
+							<Upload className="mx-auto h-12 w-12 text-gray-400" />
+							<div className="flex text-sm text-gray-600">
+								<label
+									htmlFor="waste-image"
+									className="relative cursor-pointer bg-white rounded-md font-medium text-green-600 hover:text-green-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-green-500"
+								>
+									<span>Upload a file</span>
+									<input
+										id="waste-image"
+										name="waste-image"
+										type="file"
+										className="sr-only"
+										onChange={handleFileChange}
+										accept="image/*"
+									/>
+								</label>
+								<p className="pl-1">or drag and drop</p>
+							</div>
+							<p className="text-xs text-gray-500">
+								PNG, JPG, GIF up to 10MB
+							</p>
+						</div>
+					</div>
+				</div>
+				{preview && (
+					<div className="mt-4 mb-8">
+						<img
+							src={preview}
+							alt="Waste preview"
+							className="max-w-full h-auto rounded-xl shadow-md"
+						/>
+					</div>
+				)}
+				<Button
+					type="button"
+					onClick={handleVerify}
+					className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg rounded-xl transition-colors duration-300"
+					disabled={!file || verficationStatus === "verfiying"}
+				>
+					{verficationStatus === "verfiying" ? (
+						<>
+							<Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
+							Verifying...
+						</>
+					) : (
+						"Verify Waste"
+					)}
+				</Button>
+			</form>
 		</div>
 	);
 }
