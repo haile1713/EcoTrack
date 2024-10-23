@@ -20,11 +20,14 @@
 		"@web3auth/base": "^9.2.3",
 		"@web3auth/ethereum-provider": "^9.2.3",
 		"@web3auth/modal": "^9.2.5",
+		"axios": "^1.7.7",
 		"class-variance-authority": "^0.7.0",
 		"clsx": "^2.1.1",
 		"dotenv": "^16.4.5",
 		"drizzle-orm": "^0.35.2",
+		"leaflet": "^1.9.4",
 		"lucide-react": "^0.453.0",
+		"mapbox-gl": "^3.7.0",
 		"next": "14.2.15",
 		"react": "^18",
 		"react-dom": "^18",
@@ -33,6 +36,7 @@
 		"tailwindcss-animate": "^1.0.7"
 	},
 	"devDependencies": {
+		"@types/leaflet": "^1.9.14",
 		"@types/node": "^20",
 		"@types/react": "^18",
 		"@types/react-dom": "^18",
