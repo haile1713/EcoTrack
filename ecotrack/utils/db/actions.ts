@@ -234,7 +234,28 @@ export async function getRecentReports(limit: number = 10) {
 		return [];
 	}
 }
-
+export async function getAllRewards() {
+	try {
+	  const rewards = await db
+		.select({
+		  id: Rewards.id,
+		  userId: Rewards.userId,
+		  points: Rewards.points,
+		//   level: Rewards.level,
+		  createdAt: Rewards.createdAt,
+		  userName: Users.name,
+		})
+		.from(Rewards)
+		.leftJoin(Users, eq(Rewards.userId, Users.id))
+		.orderBy(desc(Rewards.points))
+		.execute();
+  
+	  return rewards;
+	} catch (error) {
+	  console.error("Error fetching all rewards:", error);
+	  return [];
+	}
+  }
 export async function getAvailableRewards(userId: number) {
 	try {
 		// Get user's total points
