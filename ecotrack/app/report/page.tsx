@@ -17,6 +17,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { promises } from "dns";
 import { parseArgs } from "util";
+import {
+	createReport,
+	getRecentReports,
+	getUserByEmail,
+} from "@/utils/db/actions";
 
 const geminiApiKey = process.env.GEMINI_API_KEY as any;
 const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY as any;
@@ -24,12 +29,12 @@ const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY as any;
 const libraries: Libraries = ["places"];
 
 export default function ReportPage() {
-	const [user, serUser] = useState("");
+	const [user, setUser] = useState("") as any;
 	const router = useRouter();
 
 	const [reports, setReports] = useState<
 		Array<{
-			ide: number;
+			id: number;
 			location: string;
 			wasteType: string;
 			amount: string;
@@ -182,17 +187,65 @@ export default function ReportPage() {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (verficationStatus !== "success" || !user) {
-			toast.error("please verify the waste before submitting or log in");
-            return;
+			toast.error("Please verify the waste before submitting or log in.");
+			return;
 		}
 
-        setIsSubmitting (true);
+		setIsSubmitting(true);
+		try {
+			const report = (await createReport(
+				Number(user.id),
+				Number(user.id),
+				newReport.location,
+				newReport.type,
+				newReport.amount,
+				preview || undefined,
+				verificationResults
+					? JSON.stringify(verificationResults)
+					: undefined
+			)) as any;
 
-        try{
-            // const report = await createReport() as any;
+			const formattedReport = {
+				id: report.id,
+				location: report.location,
+				wasteType: report.wasteType,
+				amount: report.amount,
+				createdAt: report.createdAt.toISOString().split("T")[0],
+			};
 
-        }catch (e){
-
-        }
+			setReports([formattedReport, ...reports]);
+			setNewReport({ location: "", type: "", amount: "" });
+			setFile(null);
+			setPreview(null);
+			setVerificationStatus("idle");
+			setVerificationResults(null);
+			toast.success(
+				"Report submitted successfully! You've earned points for reporting waste."
+			);
+		} catch (error) {
+			console.error("Error submitting report:", error);
+			toast.error("Failed to submit report. Please try again.");
+		} finally {
+			setIsSubmitting(false);
+		}
 	};
+
+	useEffect(() => {
+		const checkUser = async () => {
+			const email = localStorage.getItem("userEmail");
+			if (email) {
+				let user = await getUserByEmail(email);
+				setUser(user);
+				const recentReports = (await getRecentReports()) as any;
+				const formattedReports = recentReports?.map((report: any) => ({
+					...report,
+					createdAt: report.createdAt.toISOString().split("T")[0],
+				}));
+				setReports(formattedReports);
+			} else {
+				router.push("/");
+			}
+		};
+		checkUser();
+	}, [router]);
 }
