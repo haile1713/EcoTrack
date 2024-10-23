@@ -1,6 +1,13 @@
 import { Flag } from "lucide-react";
 import { db } from "./dbConfig";
-import { Notifications, Users, Transactions, Reports, Rewards } from "./schema";
+import {
+	Notifications,
+	Users,
+	Transactions,
+	Reports,
+	Rewards,
+	CollectedWastes,
+} from "./schema";
 import { eq, sql, and, desc } from "drizzle-orm";
 import { date } from "drizzle-orm/mysql-core";
 
@@ -267,5 +274,108 @@ export async function getAvailableRewards(userId: number) {
 	} catch (e) {
 		console.error("Error fetching available rewards:", e);
 		return [];
+	}
+}
+export async function getWasteCollectionTasks(limit: number = 20) {
+	try {
+		const tasks = await db
+			.select({
+				id: Reports.id,
+				location: Reports.location,
+				wasteType: Reports.wasteType,
+				amount: Reports.amount,
+				status: Reports.status,
+				date: Reports.createdAt,
+				collectorId: Reports.collectorId,
+			})
+
+			.from(Reports)
+			.limit(limit)
+			.execute();
+
+		return tasks.map((task) => ({
+			...task,
+			date: task.date.toISOString().split("T")[0], // Format date as YYYY-MM-DD
+		}));
+	} catch (error) {
+		console.error("Error fetching waste collection tasks:", error);
+		return [];
+	}
+}
+
+export async function updateTaskStatus(
+	reportId: number,
+	newStatus: string,
+	collecterId?: number
+) {
+	try {
+		const updateData: any = { status: newStatus };
+		if (collecterId !== undefined) {
+			updateData.collectorId = collecterId;
+		}
+
+		const [updateReport] = await db
+			.update(Reports)
+			.set(updateData)
+			.where(eq(Reports.id, reportId))
+			.returning()
+			.execute();
+
+		return updateReport;
+	} catch (e) {
+		console.error("err0or updating task status", e);
+		throw e;
+	}
+}
+
+export async function saveReward(userId: number, amount: number) {
+	try {
+		const [reward] = await db
+			.insert(Rewards)
+			.values({
+				userId,
+				name: "Waste Collection Reward",
+				collectionInfo: "Points earned from waste collection",
+				points: amount,
+				isAvailable: true,
+			})
+			.returning()
+			.execute();
+
+		// Create a transaction for this reward
+		await createTransaction(
+			userId,
+			"earned_collect",
+			amount,
+			"Points earned for collecting waste"
+		);
+
+		return reward;
+	} catch (error) {
+		console.error("Error saving reward:", error);
+		throw error;
+	}
+}
+
+export async function saveCollectedWaste(
+	reportId: number,
+	collectorId: number,
+	verificationResult: any
+) {
+	try {
+		const [collectedWaste] = await db
+			.insert(CollectedWastes)
+			.values({
+				reportId,
+				collectorId,
+				collectionDate: new Date(),
+				status: "verified",
+			})
+			.returning()
+			.execute();
+		return collectedWaste;
+	} catch (error) {
+		console.error("Error saving collected waste:", error);
+		throw error;
 	}
 }
