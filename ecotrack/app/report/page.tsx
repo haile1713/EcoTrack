@@ -1,35 +1,30 @@
 "use client";
-
-import { useState, useEffect, useCallback } from "react";
-
+import { useState, useCallback, useEffect } from "react";
 import { MapPin, Upload, CheckCircle, Loader } from "lucide-react";
-
 import { Button } from "@/components/ui/button";
-
 import { GoogleGenerativeAI } from "@google/generative-ai";
-
 import { StandaloneSearchBox, useJsApiLoader } from "@react-google-maps/api";
-
 import { Libraries } from "@react-google-maps/api";
-
-import { useRouter } from "next/navigation";
-
-import { toast } from "react-hot-toast";
-import { promises } from "dns";
-import { parseArgs } from "util";
 import {
+	createUser,
+	getUserByEmail,
 	createReport,
 	getRecentReports,
-	getUserByEmail,
 } from "@/utils/db/actions";
+import { useRouter } from "next/navigation";
+import { toast } from "react-hot-toast";
 
-const geminiApiKey = process.env.GEMINI_API_KEY as any;
-const googleMapsApiKey = process.env.GOOGLE_MAPS_API_KEY as any;
+const geminiApiKey = process.env.GEMINI_API_KEY;
+const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 const libraries: Libraries = ["places"];
 
 export default function ReportPage() {
-	const [user, setUser] = useState("") as any;
+	const [user, setUser] = useState<{
+		id: number;
+		email: string;
+		name: string;
+	} | null>(null);
 	const router = useRouter();
 
 	const [reports, setReports] = useState<
@@ -38,7 +33,7 @@ export default function ReportPage() {
 			location: string;
 			wasteType: string;
 			amount: string;
-			createdAt: string;
+			createdAt: Date;
 		}>
 	>([]);
 
@@ -50,24 +45,22 @@ export default function ReportPage() {
 
 	const [file, setFile] = useState<File | null>(null);
 	const [preview, setPreview] = useState<string | null>(null);
-
-	const [verficationStatus, setVerificationStatus] = useState<
-		"idle" | "verfiying" | "success" | "failure"
+	const [verificationStatus, setVerificationStatus] = useState<
+		"idle" | "verifying" | "success" | "failure"
 	>("idle");
-
-	const [verificationResults, setVerificationResults] = useState<{
-		wasteType: number;
+	const [verificationResult, setVerificationResult] = useState<{
+		wasteType: string;
 		quantity: string;
 		confidence: number;
 	} | null>(null);
-
 	const [isSubmitting, setIsSubmitting] = useState(false);
+
 	const [searchBox, setSearchBox] =
 		useState<google.maps.places.SearchBox | null>(null);
 
 	const { isLoaded } = useJsApiLoader({
 		id: "google-map-script",
-		googleMapsApiKey: googleMapsApiKey,
+		googleMapsApiKey: googleMapsApiKey!,
 		libraries: libraries,
 	});
 
@@ -75,7 +68,7 @@ export default function ReportPage() {
 		setSearchBox(ref);
 	}, []);
 
-	const onPlaceChanged = () => {
+	const onPlacesChanged = () => {
 		if (searchBox) {
 			const places = searchBox.getPlaces();
 			if (places && places.length > 0) {
@@ -88,8 +81,6 @@ export default function ReportPage() {
 		}
 	};
 
-	//gemini implementation
-
 	const handleInputChange = (
 		e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
 	) => {
@@ -101,7 +92,6 @@ export default function ReportPage() {
 		if (e.target.files && e.target.files[0]) {
 			const selectedFile = e.target.files[0];
 			setFile(selectedFile);
-
 			const reader = new FileReader();
 			reader.onload = (e) => {
 				setPreview(e.target?.result as string);
@@ -119,16 +109,15 @@ export default function ReportPage() {
 		});
 	};
 
-	//waste verfication using gemini
-
 	const handleVerify = async () => {
 		if (!file) return;
 
-		setVerificationStatus("verfiying");
+		setVerificationStatus("verifying");
 
 		try {
-			const genAI = new GoogleGenerativeAI(geminiApiKey);
+			const genAI = new GoogleGenerativeAI(geminiApiKey!);
 			const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+
 			const base64Data = await readFileAsBase64(file);
 
 			const imageParts = [
@@ -141,16 +130,16 @@ export default function ReportPage() {
 			];
 
 			const prompt = `You are an expert in waste management and recycling. Analyze this image and provide:
-            1. The type of waste (e.g., plastic, paper, glass, metal, organic)
-            2. An estimate of the quantity or amount (in kg or liters)
-            3. Your confidence level in this assessment (as a percentage)
-            
-            Respond in JSON format like this:
-            {
-              "wasteType": "type of waste",
-              "quantity": "estimated quantity with unit",
-              "confidence": confidence level as a number between 0 and 1
-            }`;
+        1. The type of waste (e.g., plastic, paper, glass, metal, organic)
+        2. An estimate of the quantity or amount (in kg or liters)
+        3. Your confidence level in this assessment (as a percentage)
+        
+        Respond in JSON format like this:
+        {
+          "wasteType": "type of waste",
+          "quantity": "estimated quantity with unit",
+          "confidence": confidence level as a number between 0 and 1
+        }`;
 
 			const result = await model.generateContent([prompt, ...imageParts]);
 			const response = await result.response;
@@ -163,7 +152,7 @@ export default function ReportPage() {
 					parsedResult.quantity &&
 					parsedResult.confidence
 				) {
-					setVerificationResults(parsedResult);
+					setVerificationResult(parsedResult);
 					setVerificationStatus("success");
 					setNewReport({
 						...newReport,
@@ -186,7 +175,7 @@ export default function ReportPage() {
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
-		if (verficationStatus !== "success" || !user) {
+		if (verificationStatus !== "success" || !user) {
 			toast.error("Please verify the waste before submitting or log in.");
 			return;
 		}
@@ -200,9 +189,7 @@ export default function ReportPage() {
 				newReport.type,
 				newReport.amount,
 				preview || undefined,
-				verificationResults
-					? JSON.stringify(verificationResults)
-					: undefined
+				verificationResult ? JSON.stringify(verificationResult) : undefined
 			)) as any;
 
 			const formattedReport = {
@@ -218,9 +205,10 @@ export default function ReportPage() {
 			setFile(null);
 			setPreview(null);
 			setVerificationStatus("idle");
-			setVerificationResults(null);
+			setVerificationResult(null);
+
 			toast.success(
-				"Report submitted successfully! You've earned points for reporting waste."
+				`Report submitted successfully! You've earned points for reporting waste.`
 			);
 		} catch (error) {
 			console.error("Error submitting report:", error);
@@ -235,17 +223,31 @@ export default function ReportPage() {
 			const email = localStorage.getItem("userEmail");
 			if (email) {
 				let user = await getUserByEmail(email);
+				if (!user) {
+					user = await createUser(email, "Anonymous User");
+				}
 				setUser(user);
-				const recentReports = (await getRecentReports()) as any;
-				const formattedReports = recentReports?.map((report: any) => ({
-					...report,
-					createdAt: report.createdAt.toISOString().split("T")[0],
-				}));
-				setReports(formattedReports);
+
+				const recentReport = await getRecentReports();
+
+				if (recentReport && recentReport.length > 0) {
+					// Map the recentReport to match the structure of Report
+					const formattedReports = recentReport.map((report: any) => {
+						return {
+							id: report.id || 0, // Assign a default or fallback id if missing
+							location: report.location || "", // Assign a default value
+							wasteType: report.wasteType || "",
+							amount: report.amount || "",
+							createdAt: new Date(report.createdAt), // Ensure createdAt is a Date
+						};
+					});
+					setReports(formattedReports);
+				}
 			} else {
-				// router.push("/");
+				// router.push('/login');
 			}
 		};
+
 		checkUser();
 	}, [router]);
 
@@ -307,9 +309,9 @@ export default function ReportPage() {
 					type="button"
 					onClick={handleVerify}
 					className="w-full mb-8 bg-blue-600 hover:bg-blue-700 text-white py-3 text-lg rounded-xl transition-colors duration-300"
-					disabled={!file || verficationStatus === "verfiying"}
+					disabled={!file || verificationStatus === "verifying"}
 				>
-					{verficationStatus === "verfiying" ? (
+					{verificationStatus === "verifying" ? (
 						<>
 							<Loader className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" />
 							Verifying...
@@ -319,7 +321,7 @@ export default function ReportPage() {
 					)}
 				</Button>
 
-				{verficationStatus === "success" && verificationResults && (
+				{verificationStatus === "success" && verificationResult && (
 					<div className="bg-green-50 border-l-4 border-green-400 p-4 mb-8 rounded-r-xl">
 						<div className="flex items-center">
 							<CheckCircle className="h-6 w-6 text-green-400 mr-3" />
@@ -328,13 +330,11 @@ export default function ReportPage() {
 									Verification Successful
 								</h3>
 								<div className="mt-2 text-sm text-green-700">
-									<p>Waste Type: {verificationResults.wasteType}</p>
-									<p>Quantity: {verificationResults.quantity}</p>
+									<p>Waste Type: {verificationResult.wasteType}</p>
+									<p>Quantity: {verificationResult.quantity}</p>
 									<p>
 										Confidence:{" "}
-										{(verificationResults.confidence * 100).toFixed(
-											2
-										)}
+										{(verificationResult.confidence * 100).toFixed(2)}
 										%
 									</p>
 								</div>
@@ -354,7 +354,7 @@ export default function ReportPage() {
 						{isLoaded ? (
 							<StandaloneSearchBox
 								onLoad={onLoad}
-								onPlacesChanged={onPlaceChanged}
+								onPlacesChanged={onPlacesChanged}
 							>
 								<input
 									type="text"
@@ -434,11 +434,12 @@ export default function ReportPage() {
 					)}
 				</Button>
 			</form>
+
 			<h2 className="text-3xl font-semibold mb-6 text-gray-800">
 				Recent Reports
 			</h2>
 			<div className="bg-white rounded-2xl shadow-lg overflow-hidden">
-				<div className="mac-h-96 overflow-y-auto">
+				<div className="max-h-96 overflow-y-auto">
 					<table className="w-full">
 						<thead className="bg-gray-50 sticky top-0">
 							<tr>
@@ -473,7 +474,9 @@ export default function ReportPage() {
 										{report.amount}
 									</td>
 									<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-										{report.createdAt}
+										{report.createdAt instanceof Date
+											? report.createdAt.toLocaleDateString()
+											: report.createdAt}
 									</td>
 								</tr>
 							))}
