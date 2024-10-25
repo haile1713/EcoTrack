@@ -5,14 +5,15 @@ import {
 	MapPin,
 	CheckCircle,
 	Clock,
-	ArrowRight,
-	Camera,
+	// ArrowRight,
+	// Camera,
 	Upload,
 	Loader,
 	Calendar,
 	Weight,
 	Search,
 } from "lucide-react";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
@@ -414,10 +415,12 @@ export default function CollectPage() {
 							</div>
 						</div>
 						{verificationImage && (
-							<img
+							<Image
 								src={verificationImage}
 								alt="Verification"
 								className="mb-4 rounded-md w-full"
+								width={500} // add appropriate width
+								height={300} // add appropriate height
 							/>
 						)}
 						<Button

@@ -14,7 +14,7 @@ import {
 	User,
 	ChevronDown,
 	LogIn,
-	LogOut,
+	// LogOut,
 } from "lucide-react";
 import {
 	DropdownMenu,

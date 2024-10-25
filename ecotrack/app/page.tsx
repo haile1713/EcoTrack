@@ -1,18 +1,18 @@
 import {
-	ArrowRight,
+	// ArrowRight,
 	Leaf,
-	Flower,
+	// Flower,
 	Sprout,
 	Recycle,
 	Users,
 	Coins,
 	MapPin,
-	ChevronRight,
+	// ChevronRight,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 
-import Link from "next/link";
+// import Link from "next/link";
 
 function AnimatedGlobe() {
 	return (
@@ -69,11 +69,15 @@ export default function Home() {
 					Our Impact
 				</h2>
 				<div className="grid md:grid-cols-4 gap-6">
-				{/* // have to come from the database (to be implemented ) */}
-					<ImpactCard title=" Waste Collected" value={"20kg"} icon={Recycle}/> 
-					<ImpactCard title="Report Submitted " value={30} icon={MapPin}/>
-					<ImpactCard title="Token Earned"value={200} icon={Coins}/>
-					<ImpactCard title="CO2 Offset"value={"50kg"} icon={Leaf}/>
+					{/* // have to come from the database (to be implemented ) */}
+					<ImpactCard
+						title=" Waste Collected"
+						value={"20kg"}
+						icon={Recycle}
+					/>
+					<ImpactCard title="Report Submitted " value={30} icon={MapPin} />
+					<ImpactCard title="Token Earned" value={200} icon={Coins} />
+					<ImpactCard title="CO2 Offset" value={"50kg"} icon={Leaf} />
 				</div>
 			</section>
 		</div>
@@ -108,12 +112,12 @@ function ImpactCard({
 	title: string;
 	value: string | number;
 	icon: React.ElementType;
-}){
+}) {
 	return (
 		<div className="p-6 rounded-xl bg-gray-50 border border-gray-100 transition-all duration-300 ease-in-out hover:shadow-md">
-			<Icon className="h-10 w-10 text-green-500 mb-4"/>
-		<p className="text-3xl font-bold mb-2 text-gray-800">{value}</p>	
-		<p className="text-sm  text-gray-600">{title}</p>	{""}
+			<Icon className="h-10 w-10 text-green-500 mb-4" />
+			<p className="text-3xl font-bold mb-2 text-gray-800">{value}</p>
+			<p className="text-sm  text-gray-600">{title}</p> {""}
 		</div>
-	)
+	);
 }
