@@ -222,39 +222,42 @@ export default function ReportPage() {
     }
   };
 
-  useEffect(() => {
-    const checkUser = async () => {
-      const email = localStorage.getItem("userEmail");
-      if (email) {
-        let user = await getUserByEmail(email);
-        if (!user) {
-          user = await createUser(email, "Anonymous User");
-        }
-        setUser(user);
-  
-        const recentReport = await getRecentReports();
-  
-        if (recentReport && recentReport.length > 0) {
-          // Map the recentReport to match the structure of Report
-          const formattedReports = recentReport.map((report: any) => {
-            return {
-              id: report.id || 0, // Assign a default or fallback id if missing
-              location: report.location || '', // Assign a default value
+useEffect(() => {
+  const checkUser = async () => {
+    try {
+      if (typeof window !== "undefined") {
+        const email = localStorage.getItem("userEmail");
+        if (email) {
+          let user = await getUserByEmail(email);
+          if (!user) {
+            user = await createUser(email, "Anonymous User");
+          }
+          setUser(user);
+
+          const recentReport = await getRecentReports();
+          if (recentReport && recentReport.length > 0) {
+            const formattedReports = recentReport.map((report: any) => ({
+              id: report.id || 0,
+              location: report.location || '',
               wasteType: report.wasteType || '',
               amount: report.amount || '',
-              createdAt: new Date(report.createdAt), // Ensure createdAt is a Date
-            };
-          });
-          setReports(formattedReports);
+              createdAt: new Date(report.createdAt),
+            }));
+            setReports(formattedReports);
+          }
+        } else {
+          router.push('/');
         }
-      } else {
-        // router.push('/login');
       }
-    };
-  
-    checkUser();
-  }, [router]);
-  
+    } catch (error) {
+      console.error("Error in checkUser:", error);
+      router.push('/'); // Redirect on error
+    }
+  };
+
+  checkUser();
+}, [router]);
+
 
   return (
     <div className="p-8 max-w-4xl mx-auto">
