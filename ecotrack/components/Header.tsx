@@ -14,7 +14,6 @@ import {
 	User,
 	ChevronDown,
 	LogIn,
-	// LogOut,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -26,7 +25,6 @@ import { Badge } from "@/components/ui/badge";
 import { Web3Auth } from "@web3auth/modal";
 import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
-// import { useMediaQuery } from "@/hooks/useMediaQuery"
 import {
 	createUser,
 	markNotificationAsRead,
@@ -70,6 +68,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	const [provider, setProvider] = useState<IProvider | null>(null);
 	const [loggedIn, setLoggedIn] = useState(false);
 	const [loading, setLoading] = useState(true);
+	const [isInitialized, setIsInitialized] = useState(false); // Track Web3Auth initialization
 	const [userInfo, setUserInfo] = useState<any>(null);
 	const pathname = usePathname();
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -79,10 +78,11 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	console.log("user info", userInfo);
 
 	useEffect(() => {
-		const init = async () => {
+		const initWeb3Auth = async () => {
 			try {
 				await web3auth.initModal();
 				setProvider(web3auth.provider);
+				setIsInitialized(true); // Set to true once initialized
 
 				if (web3auth.connected) {
 					setLoggedIn(true);
@@ -97,7 +97,6 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 							);
 						} catch (error) {
 							console.error("Error creating user:", error);
-							// Handle the error appropriately, maybe show a message to the user
 						}
 					}
 				}
@@ -108,7 +107,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 			}
 		};
 
-		init();
+		initWeb3Auth();
 	}, []);
 
 	useEffect(() => {
@@ -126,8 +125,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
 		fetchNotifications();
 
-		// Set up periodic checking for new notifications
-		const notificationInterval = setInterval(fetchNotifications, 30000); // Check every 30 seconds
+		const notificationInterval = setInterval(fetchNotifications, 30000);
 
 		return () => clearInterval(notificationInterval);
 	}, [userInfo]);
@@ -145,7 +143,6 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
 		fetchUserBalance();
 
-		// Add an event listener for balance updates
 		const handleBalanceUpdate = (event: CustomEvent) => {
 			setBalance(event.detail);
 		};
@@ -164,8 +161,8 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	}, [userInfo]);
 
 	const login = async () => {
-		if (!web3auth) {
-			console.log("web3auth not initialized yet");
+		if (!isInitialized) {
+			console.log("Web3Auth is not initialized yet");
 			return;
 		}
 		try {
@@ -180,7 +177,6 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 					await createUser(user.email, user.name || "Anonymous User");
 				} catch (error) {
 					console.error("Error creating user:", error);
-					// Handle the error appropriately, maybe show a message to the user
 				}
 			}
 		} catch (error) {
@@ -214,7 +210,6 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 					await createUser(user.email, user.name || "Anonymous User");
 				} catch (error) {
 					console.error("Error creating user:", error);
-					// Handle the error appropriately, maybe show a message to the user
 				}
 			}
 		}
@@ -285,26 +280,26 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-64">
 								{notifications.length > 0 ? (
-									notifications.map((notifications: any) => (
+									notifications.map((notification: any) => (
 										<DropdownMenuItem
-											key={notifications.id}
+											key={notification.id}
 											onClick={() =>
-												handleNotificationClick(notifications.id)
+												handleNotificationClick(notification.id)
 											}
 										>
 											<div className="flex flex-col">
 												<span className="font-medium">
-													{notifications.type}
+													{notification.type}
 												</span>
 												<span className="text-sm text-gray-500">
-													{notifications.message}
+													{notification.message}
 												</span>
 											</div>
 										</DropdownMenuItem>
 									))
 								) : (
 									<DropdownMenuItem>
-										No new notfications
+										No new notifications
 									</DropdownMenuItem>
 								)}
 							</DropdownMenuContent>
