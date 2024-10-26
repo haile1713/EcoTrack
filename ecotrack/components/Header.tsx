@@ -14,6 +14,7 @@ import {
 	User,
 	ChevronDown,
 	LogIn,
+	LogOut,
 } from "lucide-react";
 import {
 	DropdownMenu,
@@ -25,6 +26,7 @@ import { Badge } from "@/components/ui/badge";
 import { Web3Auth } from "@web3auth/modal";
 import { CHAIN_NAMESPACES, IProvider, WEB3AUTH_NETWORK } from "@web3auth/base";
 import { EthereumPrivateKeyProvider } from "@web3auth/ethereum-provider";
+// import { useMediaQuery } from "@/hooks/useMediaQuery"
 import {
 	createUser,
 	markNotificationAsRead,
@@ -36,7 +38,7 @@ import {
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const clientId =
-	"BNg9wmm89Izy7oHx1xeMaiduFovtaVdLNtHZyfqPG8HiruniH0prYVNmNdkHYNqJ68Kh0vOk9k2QKqQN0FoubHg";
+	"BJKdDFkNtkWX87XqkuWrDu4rbkSvWyQZ5lswS0ucINxxcN0inRVW8zzKAywPPzgiOHP7_3PcfFwfpvcQvSdaLRs";
 
 const chainConfig = {
 	chainNamespace: CHAIN_NAMESPACES.EIP155,
@@ -63,50 +65,11 @@ interface HeaderProps {
 	onMenuClick: () => void;
 	totalEarnings: number;
 }
-useEffect(() => {
-	const initWeb3Auth = async () => {
-		try {
-			await web3auth.initModal();
-			setProvider(web3auth.provider);
-			setIsInitialized(true); // Set to true once initialized
-
-			if (web3auth.connected) {
-				setLoggedIn(true);
-				const user = await web3auth.getUserInfo();
-				setUserInfo(user);
-				if (user.email) {
-					localStorage.setItem("userEmail", user.email);
-					await createUser(user.email, user.name || "Anonymous User");
-				}
-			}
-		} catch (error) {
-			console.error("Error initializing Web3Auth:", error);
-		} finally {
-			setLoading(false);
-		}
-	};
-
-	const retryInitWeb3Auth = async () => {
-		for (let i = 0; i < 3; i++) {
-			// Retry 3 times
-			try {
-				await initWeb3Auth();
-				break;
-			} catch (error) {
-				console.error(`Retrying Web3Auth init (${i + 1})`, error);
-				await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait before retry
-			}
-		}
-	};
-
-	retryInitWeb3Auth();
-}, []);
 
 export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	const [provider, setProvider] = useState<IProvider | null>(null);
 	const [loggedIn, setLoggedIn] = useState(false);
 	const [loading, setLoading] = useState(true);
-	const [isInitialized, setIsInitialized] = useState(false); // Track Web3Auth initialization
 	const [userInfo, setUserInfo] = useState<any>(null);
 	const pathname = usePathname();
 	const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -116,11 +79,10 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	console.log("user info", userInfo);
 
 	useEffect(() => {
-		const initWeb3Auth = async () => {
+		const init = async () => {
 			try {
 				await web3auth.initModal();
 				setProvider(web3auth.provider);
-				setIsInitialized(true); // Set to true once initialized
 
 				if (web3auth.connected) {
 					setLoggedIn(true);
@@ -135,6 +97,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 							);
 						} catch (error) {
 							console.error("Error creating user:", error);
+							// Handle the error appropriately, maybe show a message to the user
 						}
 					}
 				}
@@ -145,7 +108,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 			}
 		};
 
-		initWeb3Auth();
+		init();
 	}, []);
 
 	useEffect(() => {
@@ -163,7 +126,8 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
 		fetchNotifications();
 
-		const notificationInterval = setInterval(fetchNotifications, 30000);
+		// Set up periodic checking for new notifications
+		const notificationInterval = setInterval(fetchNotifications, 30000); // Check every 30 seconds
 
 		return () => clearInterval(notificationInterval);
 	}, [userInfo]);
@@ -181,6 +145,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 
 		fetchUserBalance();
 
+		// Add an event listener for balance updates
 		const handleBalanceUpdate = (event: CustomEvent) => {
 			setBalance(event.detail);
 		};
@@ -199,8 +164,8 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	}, [userInfo]);
 
 	const login = async () => {
-		if (!isInitialized) {
-			console.log("Web3Auth is not initialized yet");
+		if (!web3auth) {
+			console.log("web3auth not initialized yet");
 			return;
 		}
 		try {
@@ -215,6 +180,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 					await createUser(user.email, user.name || "Anonymous User");
 				} catch (error) {
 					console.error("Error creating user:", error);
+					// Handle the error appropriately, maybe show a message to the user
 				}
 			}
 		} catch (error) {
@@ -248,6 +214,7 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 					await createUser(user.email, user.name || "Anonymous User");
 				} catch (error) {
 					console.error("Error creating user:", error);
+					// Handle the error appropriately, maybe show a message to the user
 				}
 			}
 		}
@@ -318,26 +285,26 @@ export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 							</DropdownMenuTrigger>
 							<DropdownMenuContent align="end" className="w-64">
 								{notifications.length > 0 ? (
-									notifications.map((notification: any) => (
+									notifications.map((notifications: any) => (
 										<DropdownMenuItem
-											key={notification.id}
+											key={notifications.id}
 											onClick={() =>
-												handleNotificationClick(notification.id)
+												handleNotificationClick(notifications.id)
 											}
 										>
 											<div className="flex flex-col">
 												<span className="font-medium">
-													{notification.type}
+													{notifications.type}
 												</span>
 												<span className="text-sm text-gray-500">
-													{notification.message}
+													{notifications.message}
 												</span>
 											</div>
 										</DropdownMenuItem>
 									))
 								) : (
 									<DropdownMenuItem>
-										No new notifications
+										No new notfications
 									</DropdownMenuItem>
 								)}
 							</DropdownMenuContent>
