@@ -63,6 +63,44 @@ interface HeaderProps {
 	onMenuClick: () => void;
 	totalEarnings: number;
 }
+useEffect(() => {
+	const initWeb3Auth = async () => {
+		try {
+			await web3auth.initModal();
+			setProvider(web3auth.provider);
+			setIsInitialized(true); // Set to true once initialized
+
+			if (web3auth.connected) {
+				setLoggedIn(true);
+				const user = await web3auth.getUserInfo();
+				setUserInfo(user);
+				if (user.email) {
+					localStorage.setItem("userEmail", user.email);
+					await createUser(user.email, user.name || "Anonymous User");
+				}
+			}
+		} catch (error) {
+			console.error("Error initializing Web3Auth:", error);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	const retryInitWeb3Auth = async () => {
+		for (let i = 0; i < 3; i++) {
+			// Retry 3 times
+			try {
+				await initWeb3Auth();
+				break;
+			} catch (error) {
+				console.error(`Retrying Web3Auth init (${i + 1})`, error);
+				await new Promise((resolve) => setTimeout(resolve, 2000)); // Wait before retry
+			}
+		}
+	};
+
+	retryInitWeb3Auth();
+}, []);
 
 export default function Header({ onMenuClick, totalEarnings }: HeaderProps) {
 	const [provider, setProvider] = useState<IProvider | null>(null);
