@@ -38,7 +38,7 @@ import {
 import { useMediaQuery } from "@/hooks/useMediaQuery";
 
 const clientId =
-	"BJKdDFkNtkWX87XqkuWrDu4rbkSvWyQZ5lswS0ucINxxcN0inRVW8zzKAywPPzgiOHP7_3PcfFwfpvcQvSdaLRs";
+	"BNg9wmm89Izy7oHx1xeMaiduFovtaVdLNtHZyfqPG8HiruniH0prYVNmNdkHYNqJ68Kh0vOk9k2QKqQN0FoubHg";
 
 const chainConfig = {
 	chainNamespace: CHAIN_NAMESPACES.EIP155,
