@@ -27,6 +27,7 @@
 		"drizzle-orm": "^0.35.2",
 		"leaflet": "^1.9.4",
 		"lucide-react": "^0.453.0",
+		"magic-sdk": "^28.17.0",
 		"mapbox-gl": "^3.7.0",
 		"next": "14.2.15",
 		"react": "^18",
