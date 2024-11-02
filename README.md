@@ -13,6 +13,8 @@
 
 ---
 ## Screenshots
+![Screenshot 2024-10-26 023001](https://github.com/user-attachments/assets/ab6b47ee-33cc-43ef-8a8f-4fa3c76d8e03)
+![Screenshot 2024-10-26 023010](https://github.com/user-attachments/assets/a0778d79-e725-465c-b8c6-d29a60fa749b)
 
 ## Tech Stack
 
