@@ -31,6 +31,7 @@
 ---
 ## Live Demo
 Still under Deployment ❗️❗️
+you can still explore it locally 
 ## Installation
 
 1. Clone the repository:
